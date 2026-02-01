@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cheat Panel • Neon</title>
+<meta name="theme-color" content="#000814">
+<style>
+  :root{
+    --bg:#000814;
+    --panel:rgba(8,18,40,.55);
+    --neon:#2b6fff;
+    --cyan:#00b4ff;
+    --text:#eaf6ff;
+    --muted:#9bb6d1;
+    --accent: #7a5cff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
+
+  /* PARTICLE BACKGROUND */
+  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
+  /* OPEN HINT */
+  .gesture-hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+    width:70px;height:6px;border-radius:999px;
+    background:linear-gradient(90deg,rgba(43,111,255,.15),rgba(0,180,255,.5),rgba(43,111,255,.15));
+    box-shadow:0 0 12px rgba(0,180,255,.35);opacity:.8;z-index:1}
+
+  /* NOTIF TOP */
+  .notif{position:fixed;top:-64px;left:50%;transform:translateX(-50%);
+    min-width:220px;max-width:92vw;padding:12px 16px;border-radius:12px;
+    font-weight:800;text-align:center;color:#041014;
+    background:#00ff9a;box-shadow:0 8px 26px rgba(0,255,170,.35);
+    z-index:4;transition:top .35s cubic-bezier(.2,.8,.2,1)}
+  .notif.warn{background:#ff4d6d;box-shadow:0 8px 26px rgba(255,77,109,.35)}
+  .notif.show{top:16px}
+
+  /* BACKDROP */
+  .backdrop{position:fixed;inset:0;z-index:2;background:rgba(0,16,36,.45);
+    backdrop-filter:blur(8px) saturate(120%);-webkit-backdrop-filter:blur(8px) saturate(120%);
+    opacity:0;pointer-events:none;transition:opacity .25s ease}
+  .backdrop.show{opacity:1;pointer-events:auto}
+
+  /* PANEL */
+  .panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-40%) scale(.98);
+    width:min(92vw,460px);padding:18px 16px 16px;border-radius:18px;
+    background:var(--panel);border:2px solid rgba(43,111,255,.5);
+    box-shadow:0 0 0 2px rgba(43,111,255,.25) inset, 0 0 18px 4px rgba(43,111,255,.28),
+               0 0 42px 14px rgba(0,180,255,.16);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    z-index:3;opacity:0;pointer-events:none;
+    transition:transform .32s cubic-bezier(.2,.8,.2,1),opacity .25s ease}
+  .panel.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+
+  .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .title{font-weight:900;letter-spacing:.12em;font-size:13px;opacity:.95}
+  .dot{width:12px;height:12px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,var(--cyan),var(--neon));
+    box-shadow:0 0 10px 2px rgba(0,180,255,.6)}
+
+  .divider{height:1px;margin:8px 0 6px;background:linear-gradient(90deg,transparent,rgba(0,180,255,.55),transparent)}
+
+  .group{margin:10px 0 14px}
+  .label{font-weight:800;font-size:15px;margin-bottom:10px;letter-spacing:.02em}
+
+  /* TOGGLE BUTTON */
+  .toggle{display:flex;align-items:center;justify-content:center;gap:10px;
+    height:52px;width:100%;border-radius:14px;border:1.5px solid rgba(43,111,255,.5);
+    font-weight:900;text-transform:uppercase;letter-spacing:.03em;
+    background:rgba(20,40,80,.35);
+    box-shadow:inset 0 0 14px rgba(43,111,255,.18), 0 8px 24px rgba(0,0,0,.35);
+    cursor:pointer;user-select:none;transition:transform .06s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease}
+  .toggle:active{transform:scale(.985)}
+  .toggle.on{background:radial-gradient(circle at 50% 50%,rgba(0,180,255,.22),rgba(20,40,80,.45));
+    border-color:rgba(0,180,255,.9);
+    box-shadow:inset 0 0 22px rgba(0,180,255,.35), 0 0 26px rgba(0,180,255,.25), 0 8px 24px rgba(0,0,0,.45)}
+
+  /* INJECT BUTTON */
+  .inject{height:56px;border-radius:16px;
+    background:linear-gradient(135deg,#1b4eff,#8a69ff 60%,#00d4ff);
+    color:#0a0d14;font-weight:900;border:none;cursor:pointer;
+    width:100%;box-shadow:0 8px 26px rgba(37,124,255,.45), inset 0 0 18px rgba(255,255,255,.22);
+    letter-spacing:.04em;text-transform:uppercase;transition:transform .06s ease,filter .2s ease}
+  .inject:active{transform:scale(.985)}
+  .inject.on{filter:saturate(130%) brightness(1.1)}
+
+  /* SLIDER */
+  .slider-wrap{padding:8px 2px 0}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent}
+  input[type=range]::-webkit-slider-runnable-track{
+    height:8px;border-radius:999px;background:linear-gradient(90deg,rgba(30,80,160,.35),rgba(0,180,255,.8));
+    box-shadow:0 0 14px rgba(0,180,255,.25) inset}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;margin-top:-7px;
+    width:22px;height:22px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#e8f7ff,#7fd8ff 60%,#008cff 61%);
+    border:1px solid rgba(255,255,255,.35);box-shadow:0 0 16px 4px rgba(0,180,255,.55);cursor:pointer}
+  input[type=range]::-moz-range-track{height:8px;border-radius:999px;background:linear-gradient(90deg,rgba(30,80,160,.35),rgba(0,180,255,.8))}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#7fd8ff;border:none}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="gesture-hint" aria-hidden="true"></div>
+
+<div id="notif" class="notif" role="status" aria-live="polite"></div>
+<div id="backdrop" class="backdrop"></div>
+
+<div id="panel" class="panel" role="dialog" aria-modal="false" aria-label="Cheat Panel">
+  <div class="panel-header">
+    <div class="title">CHEAT PANEL</div><div class="dot"></div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="group">
+    <div class="label">Aim Legit</div>
+    <div class="slider-wrap"><input id="aim" type="range" min="0" max="100" value="85"></div>
+    <div class="hint">Geser sesuai kebutuhan.</div>
+  </div>
+
+  <div class="group">
+    <div class="label">Sensitivity Control</div>
+    <div class="slider-wrap"><input id="sens" type="range" min="0" max="100" value="30"></div>
+  </div>
+
+  <div class="group">
+    <div class="label">Stabilizer</div>
+    <div class="slider-wrap"><input id="stab" type="range" min="0" max="100" value="30"></div>
+  </div>
+
+  <div class="group">
+    <div id="antiban" class="toggle">Antiban</div>
+  </div>
+  <div class="group">
+    <div id="anticheat" class="toggle">Anticheat</div>
+  </div>
+
+  <button id="inject" class="inject">Inject</button>
+</div>
+
+<script>
+/* ===== WebAudio: click & notif pop (no external files) ===== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playClick(){
+  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+  o.type='square'; o.frequency.value=800;
+  g.gain.setValueAtTime(0.18, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.06);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.07);
+}
+function playPop(success=true){
+  const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(success?640:440, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(success?880:320, audioCtx.currentTime+0.18);
+  g.gain.setValueAtTime(0.16, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.22);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.25);
+}
+
+/* ===== Particle Background ===== */
+const c=document.getElementById('bg'), x=c.getContext('2d'); let W,H,P=[];
+function R(a,b){return Math.random()*(b-a)+a}
+function resize(){W=c.width=innerWidth; H=c.height=innerHeight}
+addEventListener('resize',()=>{resize(); initParticles()})
+resize();
+function initParticles(){
+  const count = Math.min(200, Math.max(80, Math.floor((W*H)/10000)));
+  P = Array.from({length:count},()=>({x:R(0,W),y:R(0,H),r:R(.6,2.1),vx:R(-.22,.22),vy:R(-.22,.22),a:R(.25,.65)}));
+}
+initParticles();
+(function loop(){
+  requestAnimationFrame(loop);
+  x.clearRect(0,0,W,H);
+  const g=x.createRadialGradient(W*.5,H*.5,0,W*.5,H*.5,Math.max(W,H)*.75);
+  g.addColorStop(0,'rgba(0,36,80,.25)'); g.addColorStop(1,'rgba(0,0,0,.35)');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  for(const p of P){p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+    x.beginPath(); x.arc(p.x,p.y,p.r,0,Math.PI*2); x.fillStyle=`rgba(0,180,255,${p.a})`; x.fill()}
+  for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const a=P[i],b=P[j]; const dx=a.x-b.x,dy=a.y-b.y; const d2=dx*dx+dy*dy;
+    if(d2<120*120){const o=1-(Math.sqrt(d2)/120); x.strokeStyle=`rgba(0,120,255,${o*.14})`; x.lineWidth=1; x.beginPath(); x.moveTo(a.x,a.y); x.lineTo(b.x,b.y); x.stroke()}}}
+})();
+
+/* ===== Panel open/close with gestures ===== */
+const panel = document.getElementById('panel');
+const backdrop = document.getElementById('backdrop');
+const notif = document.getElementById('notif');
+
+function openPanel(){ panel.classList.add('show'); backdrop.classList.add('show'); }
+function closePanel(){ panel.classList.remove('show'); backdrop.classList.remove('show'); }
+backdrop.addEventListener('click', closePanel);
+
+let sy=null;
+document.addEventListener('touchstart',e=>{sy=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(sy==null) return;
+  const dy=e.changedTouches[0].clientY - sy;
+  const startZone = sy/innerHeight;
+  if(!panel.classList.contains('show') && startZone>0.8 && dy<-50) openPanel();
+  if(panel.classList.contains('show') && dy>50) closePanel();
+  sy=null;
+},{passive:true});
+
+/* ===== Toggles + Inject + Notif ===== */
+function flash(text, ok=true){
+  notif.textContent=text;
+  notif.classList.toggle('warn', !ok);
+  notif.classList.add('show');
+  playPop(ok);
+  setTimeout(()=>notif.classList.remove('show'), 1800);
+}
+
+['antiban','anticheat'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('click',()=>{ el.classList.toggle('on'); playClick(); });
+});
+
+let injected=false;
+document.getElementById('inject').addEventListener('click',()=>{
+  injected=!injected;
+  const el=document.getElementById('inject');
+  el.classList.toggle('on', injected);
+  flash(injected?'Cheat diaktifkan':'Cheat dinonaktifkan', injected);
+});
+
+/* ===== Sliders: follow finger (no tapping jumps) ===== */
+function bindSlider(id){
+  const s=document.getElementById(id);
+  let dragging=false;
+  const setValFromEvent=(e)=>{
+    const r=s.getBoundingClientRect();
+    const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+    const pct=Math.max(0,Math.min(1,x/r.width));
+    s.value = Math.round(s.min*1 + pct*(s.max-s.min));
+    // visual fill track
+    s.style.background = `linear-gradient(90deg, rgba(30,80,160,.35) 0%, rgba(0,180,255,.8) ${pct*100}%, rgba(40,60,90,.25) ${pct*100}%)`;
+  };
+  s.addEventListener('touchstart',(e)=>{dragging=true; setValFromEvent(e); e.preventDefault()},{passive:false});
+  s.addEventListener('touchmove',(e)=>{if(dragging){setValFromEvent(e); e.preventDefault()}},{passive:false});
+  s.addEventListener('touchend',()=>{dragging=false});
+  s.addEventListener('mousedown',(e)=>{dragging=true; setValFromEvent(e)});
+  document.addEventListener('mousemove',(e)=>{if(dragging) setValFromEvent(e)});
+  document.addEventListener('mouseup',()=>{dragging=false});
+  // init bg
+  s.dispatchEvent(new Event('touchend'));
+}
+['aim','sens','stab'].forEach(bindSlider);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
