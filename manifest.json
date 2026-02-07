@@ -1,18 +1,18 @@
 {
   "name": "Cheat Panel Neon",
   "short_name": "CheatNeon",
-  "start_url": "./index.html",
+  "start_url": "https://cheat-panel-neon-iu1u.vercel.app/",
   "display": "standalone",
   "background_color": "#000814",
   "theme_color": "#000814",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "https://cheat-panel-neon-iu1u.vercel.app/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "https://cheat-panel-neon-iu1u.vercel.app/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
